@@ -1,0 +1,20 @@
+{
+    "class_name": "S",
+    "created": "2025-12-06T10:55:56.111726",
+    "total_samples": 80,
+    "batches": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+    ],
+    "hand_configurations": [
+        "2_hand_Left_Right"
+    ]
+}

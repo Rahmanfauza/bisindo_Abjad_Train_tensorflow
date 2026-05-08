@@ -1,0 +1,97 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f0f2f5;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    margin-bottom: 20px;
+    color: #4a4a4a;
+}
+
+.container {
+    position: relative;
+    width: 640px;
+    height: 480px;
+    background-color: #000;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 640px;
+    height: 480px;
+    transform: scaleX(-1); /* Mirror effect */
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 640px;
+    height: 480px;
+    transform: scaleX(-1); /* Mirror effect to match video */
+}
+
+#status {
+    margin-top: 15px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    text-align: center;
+    width: 600px;
+}
+
+.status-loading {
+    background-color: #e2e3e5;
+    color: #383d41;
+}
+
+.status-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+#prediction-container {
+    margin-top: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    min-width: 300px;
+    text-align: center;
+}
+
+.prediction-text {
+    font-size: 2em;
+    font-weight: bold;
+    display: block;
+}
+
+.confidence-text {
+    font-size: 1em;
+    color: #666;
+    margin-top: 5px;
+}
+
+.high-confidence {
+    color: #28a745;
+}
+
+.low-confidence {
+    color: #dc3545;
+}

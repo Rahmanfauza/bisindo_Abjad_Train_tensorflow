@@ -1,0 +1,21 @@
+{
+    "class_name": "R",
+    "created": "2025-12-06T10:49:41.381045",
+    "total_samples": 80,
+    "batches": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+    ],
+    "hand_configurations": [
+        "2_hand_Left_Left",
+        "1_hand_Left"
+    ]
+}
