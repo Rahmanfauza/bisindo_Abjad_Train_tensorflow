@@ -1,1 +1,6 @@
-.logs/
+.venv/
+__pycache__/
+logs/
+*.pyc
+*.h5
+*.keras

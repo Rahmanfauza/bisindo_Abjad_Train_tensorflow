@@ -2,9 +2,14 @@ import tensorflow as tf
 import numpy as np
 import os
 import glob
+import datetime
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')  # Non-interactive backend (safe for server/headless)
+import seaborn as sns
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
-import datetime
+from sklearn.metrics import confusion_matrix, classification_report
 
 # 1. Configuration
 DATASET_PATH = "dataset_bisindo"
@@ -139,12 +144,124 @@ def main():
 
     # --- Save Model ---
     model.save('bisindo_mlp_model.keras')
-    model.save('bisindo_mlp_model.h5') # Legacy format
+    model.save('bisindo_mlp_model.h5')  # Legacy format
     print("Model saved to bisindo_mlp_model.keras and bisindo_mlp_model.h5")
 
     # Save classes
     np.save('classes.npy', classes)
     print("Classes saved to classes.npy")
+
+    # --- Evaluation & Visualization ---
+    evaluate_and_save(model, history, X_val, y_val_encoded, classes)
+
+
+def evaluate_and_save(model, history, X_val, y_val_encoded, classes):
+    """Generate and save evaluation plots to 'hasil_evaluasi' folder."""
+
+    # Create output directory with timestamp
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_dir = os.path.join("hasil_evaluasi", timestamp)
+    os.makedirs(output_dir, exist_ok=True)
+    print(f"\nSaving evaluation results to: {output_dir}")
+
+    # ── 1. Accuracy & Loss Curves ──────────────────────────────────────────────
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    fig.suptitle("Training History", fontsize=16, fontweight='bold')
+
+    # Accuracy
+    axes[0].plot(history.history['accuracy'],     label='Train Accuracy', color='#2196F3', linewidth=2)
+    axes[0].plot(history.history['val_accuracy'], label='Val Accuracy',   color='#FF5722', linewidth=2, linestyle='--')
+    axes[0].set_title('Model Accuracy')
+    axes[0].set_xlabel('Epoch')
+    axes[0].set_ylabel('Accuracy')
+    axes[0].legend()
+    axes[0].grid(True, alpha=0.3)
+
+    # Loss
+    axes[1].plot(history.history['loss'],     label='Train Loss', color='#4CAF50', linewidth=2)
+    axes[1].plot(history.history['val_loss'], label='Val Loss',   color='#9C27B0', linewidth=2, linestyle='--')
+    axes[1].set_title('Model Loss')
+    axes[1].set_xlabel('Epoch')
+    axes[1].set_ylabel('Loss')
+    axes[1].legend()
+    axes[1].grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    acc_loss_path = os.path.join(output_dir, "accuracy_loss_curves.png")
+    plt.savefig(acc_loss_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"  [OK] Accuracy & Loss curves saved: {acc_loss_path}")
+
+    # ── 2. Confusion Matrix ────────────────────────────────────────────────────
+    y_pred_probs = model.predict(X_val, verbose=0)
+    y_pred = np.argmax(y_pred_probs, axis=1)
+
+    cm = confusion_matrix(y_val_encoded, y_pred)
+    n_classes = len(classes)
+    fig_size = max(12, n_classes * 0.5)
+
+    fig, ax = plt.subplots(figsize=(fig_size, fig_size * 0.85))
+    sns.heatmap(
+        cm,
+        annot=True,
+        fmt='d',
+        cmap='Blues',
+        xticklabels=classes,
+        yticklabels=classes,
+        linewidths=0.5,
+        ax=ax
+    )
+    ax.set_title('Confusion Matrix', fontsize=16, fontweight='bold', pad=15)
+    ax.set_xlabel('Predicted Label', fontsize=12)
+    ax.set_ylabel('True Label', fontsize=12)
+    plt.xticks(rotation=45, ha='right', fontsize=9)
+    plt.yticks(rotation=0, fontsize=9)
+    plt.tight_layout()
+    cm_path = os.path.join(output_dir, "confusion_matrix.png")
+    plt.savefig(cm_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"  [OK] Confusion matrix saved  : {cm_path}")
+
+    # ── 3. Classification Report (text + bar chart) ────────────────────────────
+    report_txt = classification_report(y_val_encoded, y_pred, target_names=classes)
+    report_path = os.path.join(output_dir, "classification_report.txt")
+    with open(report_path, 'w', encoding='utf-8') as f:
+        f.write("Classification Report\n")
+        f.write("=" * 60 + "\n")
+        f.write(report_txt)
+    print(f"  [OK] Classification report   : {report_path}")
+    print("\n" + report_txt)
+
+    # Per-class F1-score bar chart
+    report_dict = classification_report(
+        y_val_encoded, y_pred, target_names=classes, output_dict=True
+    )
+    f1_scores  = [report_dict[c]['f1-score']  for c in classes]
+    precisions = [report_dict[c]['precision'] for c in classes]
+    recalls    = [report_dict[c]['recall']    for c in classes]
+
+    x = np.arange(len(classes))
+    width = 0.28
+    fig, ax = plt.subplots(figsize=(max(14, n_classes * 0.7), 6))
+    ax.bar(x - width, precisions, width, label='Precision', color='#2196F3', alpha=0.85)
+    ax.bar(x,         recalls,    width, label='Recall',    color='#4CAF50', alpha=0.85)
+    ax.bar(x + width, f1_scores,  width, label='F1-Score',  color='#FF5722', alpha=0.85)
+    ax.set_title('Per-Class Precision / Recall / F1-Score', fontsize=14, fontweight='bold')
+    ax.set_xlabel('Class')
+    ax.set_ylabel('Score')
+    ax.set_xticks(x)
+    ax.set_xticklabels(classes, rotation=45, ha='right', fontsize=9)
+    ax.set_ylim(0, 1.05)
+    ax.legend()
+    ax.grid(axis='y', alpha=0.3)
+    plt.tight_layout()
+    bar_path = os.path.join(output_dir, "classification_report_chart.png")
+    plt.savefig(bar_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"  [OK] Classification bar chart: {bar_path}")
+
+    print(f"\n✅ Semua hasil evaluasi tersimpan di folder: {output_dir}")
+
 
 if __name__ == "__main__":
     main()
